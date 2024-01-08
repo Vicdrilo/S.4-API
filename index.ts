@@ -1,7 +1,9 @@
-let div: HTMLElement | null;
+let divJoke: HTMLElement | null;
+let divWeather: HTMLElement | null;
 let score: number;
 let scoreBtns: HTMLCollectionOf<Element> | null; 
 let reportJokes: Array<object> = [];
+let chuckJokes: boolean = true;
 //Para la peticion a la API
 let options = {
   headers: {
@@ -11,32 +13,44 @@ let options = {
 
 
 window.onload = function () {
-  div = document.getElementById('joke-container');
+  divJoke = document.getElementById('joke-container');
+  divWeather = document.getElementById('weather');
   callJoke();
+  callWeather();
 };
 
 //Función para hacer el request y trabajar con response.
 let callJoke = function () {
   score = 0;
-  fetch('https://icanhazdadjoke.com/', options)
-    .then(response => response.json())
-    .then(data => {
-      showJoke(data.joke);
+  if(chuckJokes){
+    fetch('https://api.chucknorris.io/jokes/random', options)
+        .then(response => response.json())
+        .then(data => {
+        showJoke(data.value);
+        chuckJokes = false;
     });
-};
+  }else{
+    fetch('https://icanhazdadjoke.com/', options)
+        .then(response => response.json())
+        .then(data => {
+        showJoke(data.joke);
+        chuckJokes = true;
+    });
+  }
+}
 
 //Se genera el bloque donde se mostrará la broma y los diferentes botones.
 let showJoke = function (joke: string) {
-  if (div !== null) {
-    div.innerHTML = '<h3>Preparado para reir?<img src="./img/risa.png" alt="emoji risa" id="emoji-risa"></h3>'; //<i class="fa-solid fa-face-laugh-squint text-warning"></i>
+  if (divJoke !== null) {
+    divJoke.innerHTML = '<h3>Preparado para reir?<img src="./img/risa.png" alt="emoji risa" id="emoji-risa"></h3>'; //<i class="fa-solid fa-face-laugh-squint text-warning"></i>
 
     let p = document.createElement('p');
     p.setAttribute('id', 'joke');
     p.textContent = joke;
 
-    div.appendChild(p);
-    div.appendChild(makeScoreButtons());
-    div.appendChild(makeNextJokeButton('Siguiente Chiste'));
+    divJoke.appendChild(p);
+    divJoke.appendChild(makeScoreButtons());
+    divJoke.appendChild(makeNextJokeButton('Siguiente Chiste'));
 
     eventListenerToNextJokeBtn();
   }
@@ -83,6 +97,7 @@ function makeScoreButtons(){
   return div;
 }
 
+//función para añadir clases a los elementos html creados
 function addClass(element: HTMLElement, ...classes: Array<string>){
   let arr = [...classes];
   arr.map(x => element.classList.add(x));
@@ -121,4 +136,19 @@ function getDate(){
   let date: string = clickDate.getFullYear() +'-'+ (clickDate.getMonth()+1) +'-'+ clickDate.getDate()
   
   return date;
+}
+
+//=========================CREACIÓN DE FUNCTION WEATHER=========================
+function callWeather(){
+  fetch("https://www.el-tiempo.net/api/json/v2/provincias/08/municipios/08001", options)
+    .then(response => response.json())
+    .then(data => showWeather(data.stateSky.description, data.temperaturas.max, data.temperaturas.min));
+}
+
+function showWeather(descrition: string, maxTemp: string, minTemp: string){
+  let h = document.createElement('p');
+  h.setAttribute('id', 'weather-p');
+  h.textContent = 'Barcelona: '+descrition+'  ('+maxTemp+'ºC | '+minTemp+'ºC)';
+
+  divWeather?.appendChild(h);
 }
